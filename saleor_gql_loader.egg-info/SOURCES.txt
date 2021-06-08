@@ -1,0 +1,12 @@
+LICENSE.txt
+README.md
+setup.cfg
+setup.py
+saleor_gql_loader/__init__.py
+saleor_gql_loader/data_loader.py
+saleor_gql_loader/utils.py
+saleor_gql_loader.egg-info/PKG-INFO
+saleor_gql_loader.egg-info/SOURCES.txt
+saleor_gql_loader.egg-info/dependency_links.txt
+saleor_gql_loader.egg-info/requires.txt
+saleor_gql_loader.egg-info/top_level.txt

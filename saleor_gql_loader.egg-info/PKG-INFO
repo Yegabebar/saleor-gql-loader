@@ -1,0 +1,23 @@
+Metadata-Version: 2.1
+Name: saleor-gql-loader
+Version: 0.0.5
+Summary: A simple gql loader class to create some entities in Saleor
+Home-page: https://github.com/grll/saleor-gql-loader
+Author: Guillaume Raille
+Author-email: guillaume.raille@gmail.com
+License: MIT
+Download-URL: https://github.com/grll/saleor-gql-loader/archive/0.0.5.tar.gz
+Keywords: graphql,saleor,loader
+Platform: UNKNOWN
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.4
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+License-File: LICENSE.txt
+
+UNKNOWN
+
