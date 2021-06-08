@@ -1,4 +1,5 @@
-from saleor_gql_loader import ETLDataLoader, utils
+from saleor_gql_loader import ETLDataLoader, utils, ETLDataRequester
+import sys
 
 
 def get_auth_query():
@@ -36,7 +37,7 @@ def get_auth_query():
                 }"""
 
 
-def main():
+def import_mode(etl_data_loader):
     # create a default warehouse
     # warehouse_id = etl_data_loader.create_warehouse()
     # create a default shipping zone associated
@@ -45,31 +46,28 @@ def main():
 
     products = [
         {
-            "name": "tea d",
+            "name": "tea n",
             "description": "description for tea a",
             "category": "green tea",
             "price": 5.5,
             "strength": "medium"
         },
         {
-            "name": "tea e",
+            "name": "tea o",
             "description": "description for tea b",
             "category": "black tea",
             "price": 10.5,
             "strength": "strong"
         },
         {
-            "name": "tea f",
+            "name": "tea p",
             "description": "description for tea c",
             "category": "green tea",
             "price": 9.5,
             "strength": "light"
         }
     ]
-    # authentication is managed here
-    response = utils.graphql_request(get_auth_query())
-    auth_token = response['data']['tokenCreate']['token']
-    etl_data_loader = ETLDataLoader(auth_token)
+
 
     # add basic sku to products
     for i, product in enumerate(products):
@@ -86,7 +84,7 @@ def main():
 
     # will be used if we want to support product variants
     # create another quantity attribute used as variant:
-    qty_attribute_id =  etl_data_loader.create_attribute(name="qty")
+    qty_attribute_id = etl_data_loader.create_attribute(name="qty")
     unique_qty = {"100g", "200g", "300g"}
     for qty in unique_qty:
         etl_data_loader.create_attribute_value(qty_attribute_id, name=qty)
@@ -131,5 +129,21 @@ def main():
                                                                 stocks=[{"warehouse": warehouse_id, "quantity": 15}])"""
 
 
+def request_mode(etl_data_requester):
+    # Add sample test with customers or products
+
+    print(etl_data_requester.get_products())
+
+
 if __name__ == '__main__':
-    main()
+    # authentication is managed here
+    response = utils.graphql_request(get_auth_query())
+    auth_token = response['data']['tokenCreate']['token']
+
+    if "-i" in sys.argv:
+        edl = ETLDataLoader(auth_token)
+        print("Script executed in import mode")
+        import_mode(edl)
+    else:
+        edr = ETLDataRequester(auth_token)
+        request_mode(edr)
