@@ -612,10 +612,10 @@ class ETLDataLoader:
                 }
             }
         """
-
+        print("VARIABLES: ", variables)
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
-
+        print("RESPONSE: ", response)
         errors = response["data"]["productCreate"]["productErrors"]
         handle_errors(errors)
 

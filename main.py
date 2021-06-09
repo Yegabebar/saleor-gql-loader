@@ -92,7 +92,10 @@ def import_mode(etl_data_loader, product_csv):
                                                        "how_to_use", "pictures"], delimiter=';', quotechar='|')
         for row in csv_content:
             product = {"name": row['name'],
-                       "category": row['category'],
+                       "type": row['category'],
+                       # The CSV file has makeup as category but in this script we want it to be a type
+                       "category": "base",
+                       # Will need to pass a product type either from the CSV or as an exec argument
                        "price": row['price'],
                        "pros": row['pros'],
                        "desc": row['desc'],
@@ -106,52 +109,79 @@ def import_mode(etl_data_loader, product_csv):
     for i, product in enumerate(products):
         product["sku"] = "{:05}-00".format(i)
 
-    print(products)
-    # does not take in account which attributes exists or not
-    # TODO: do a graphql request to check if the given attribute already exists or not in saleor.
-    # if not, it will create it:
-    # create the strength attribute
-    strength_attribute_id = etl_data_loader.create_attribute(name="strength")
-    unique_strength = set([product['strength'] for product in products])
-    for strength in unique_strength:
-        etl_data_loader.create_attribute_value(strength_attribute_id, name=strength)
-
-    """
-    # will be used if we want to support product variants
-    # create another quantity attribute used as variant:
-    qty_attribute_id = etl_data_loader.create_attribute(name="qty")
-    unique_qty = {"100g", "200g", "300g"}
-    for qty in unique_qty:
-        etl_data_loader.create_attribute_value(qty_attribute_id, name=qty)
-
-    # does not take in account if product types exist or not
-    # TODO: do a graphql request to check if the given product type already exists or not in saleor.
-    # create a product type: tea
-    product_type_id = etl_data_loader.create_product_type(name="tea",
-                                                          hasVariants=True,
-                                                          productAttributes=[strength_attribute_id],
-                                                          variantAttributes=[qty_attribute_id])
-
+    # BASE
     # does not take in account if categories exist or not
     # TODO: do a graphql request to check if the given category already exists or not in saleor.
     # create categories
     unique_categories = set([product['category'] for product in products])
-
-    cat_to_id = {}
+    print("UNIQUE CATEGORIES: ", unique_categories)
+    category_id_dict = {}
     for category in unique_categories:
-        cat_to_id[category] = etl_data_loader.create_category(name=category)
+        category_id_dict[category] = etl_data_loader.create_category(name=category)
 
+    # does not take in account which attributes exists or not
+    # TODO: do a graphql request to check if the given attribute already exists or not in saleor.
+    # if not, it will create it:
+    # create the strength attribute
+    """strength_attribute_id = etl_data_loader.create_attribute(name="strength")
+    unique_strength = set([product['strength'] for product in products])
+    for strength in unique_strength:
+        etl_data_loader.create_attribute_value(strength_attribute_id, name=strength)"""
+
+    # MAKEUP
+    # does not take in account if product types exist or not
+    # TODO: do a graphql request to check if the given product type already exists or not in saleor.
+    # create the product types found in the CSV file
+    unique_types = set([product['type'] for product in products])
+    print("UNIQUE TYPES: ", unique_types)
+    product_type_ids = {}
+    for new_type in unique_types:
+        product_type_id = etl_data_loader.create_product_type(name=new_type,
+                                                              hasVariants=False,
+                                                              # productAttributes=[strength_attribute_id],
+                                                              )
+        product_type_ids.update({new_type: product_type_id})
+
+    """# will be used if we want to support product variants
+    # create another quantity attribute used as variant:
+    qty_attribute_id = etl_data_loader.create_attribute(name="qty")
+    unique_qty = {"100g", "200g", "300g"}
+    for qty in unique_qty:
+        etl_data_loader.create_attribute_value(qty_attribute_id, name=qty)"""
+
+    current_product_type_id = ""
+    current_category_id = ""
     # create products and store id
     for i, product in enumerate(products):
-        product_id = etl_data_loader.create_product(product_type_id,
+        print(len(product_type_ids))
+        if len(product_type_ids) > 1:
+            for type_id in product_type_ids:
+                current_product_type_id = [id_ for id_ in type_id if type_id == product['name']]
+                print(current_product_type_id)
+                break
+        else:
+            current_product_type_id = [id_ for id_ in product_type_ids][0]
+
+        print(len(category_id_dict))
+        if len(category_id_dict) > 1:
+            for category in category_id_dict:
+                current_category_id = [id_ for id_ in category if category == product['category']]
+                print(current_category_id)
+                break
+        else:
+            current_category_id = [id_ for id_ in category_id_dict][0]
+
+        product_id = etl_data_loader.create_product(current_product_type_id,
                                                     name=product["name"],
-                                                    description=product["description"],
+                                                    description=product["desc"],
                                                     basePrice=product["price"],
                                                     sku=product["sku"],
-                                                    category=cat_to_id[product["category"]],
-                                                    attributes=[{"id": strength_attribute_id, "values": [product["strength"]]}],
-                                                    isPublished=True)
-        products[i]["id"] = product_id"""
+                                                    category=current_category_id,
+                                                    # attributes=[{"id": strength_attribute_id, "values": [product["strength"]]}],
+                                                    isPublished=True
+
+                                                    )
+        products[i]["id"] = product_id
 
     """# create some variant for each product:
     for product in products:
