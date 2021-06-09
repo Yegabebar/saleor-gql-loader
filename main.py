@@ -1,5 +1,7 @@
-from saleor_gql_loader import ETLDataLoader, utils, ETLDataRequester
+import csv
 import sys
+
+from saleor_gql_loader import ETLDataLoader, utils, ETLDataRequester
 
 
 # TODO: Move the authentication query in the package utils
@@ -38,6 +40,19 @@ def get_auth_query():
                 }"""
 
 
+def get_attribute_by_name(name):
+    return f"""{{
+                attributes(filter:{{search:"{name}"}} first: 1){{
+                      edges{{
+                        node{{
+                                id
+                          name
+                        }}
+                      }}
+                    }}
+                    }}"""
+
+
 def import_mode(etl_data_loader, product_csv):
     # create a default warehouse
     # warehouse_id = etl_data_loader.create_warehouse()
@@ -70,12 +85,28 @@ def import_mode(etl_data_loader, product_csv):
     # ]
 
     # TODO: Use our csv file to create new products
-    products = {}
+    products = []
+    print("path to csv file: ", product_csv)
+    with open(product_csv, newline='') as file:
+        csv_content = csv.DictReader(file, fieldnames=["name", "category", "price", "pros", "desc", "ingredients",
+                                                       "how_to_use", "pictures"], delimiter=';', quotechar='|')
+        for row in csv_content:
+            product = {"name": row['name'],
+                       "category": row['category'],
+                       "price": row['price'],
+                       "pros": row['pros'],
+                       "desc": row['desc'],
+                       "ingredients": row['ingredients'],
+                       "how_to_use": row['how_to_use'],
+                       "pictures": row['pictures']
+                       }
+            products.append(product)
 
     # add basic sku to products
     for i, product in enumerate(products):
         product["sku"] = "{:05}-00".format(i)
 
+    print(products)
     # does not take in account which attributes exists or not
     # TODO: do a graphql request to check if the given attribute already exists or not in saleor.
     # if not, it will create it:
@@ -85,6 +116,7 @@ def import_mode(etl_data_loader, product_csv):
     for strength in unique_strength:
         etl_data_loader.create_attribute_value(strength_attribute_id, name=strength)
 
+    """
     # will be used if we want to support product variants
     # create another quantity attribute used as variant:
     qty_attribute_id = etl_data_loader.create_attribute(name="qty")
@@ -119,7 +151,7 @@ def import_mode(etl_data_loader, product_csv):
                                                     category=cat_to_id[product["category"]],
                                                     attributes=[{"id": strength_attribute_id, "values": [product["strength"]]}],
                                                     isPublished=True)
-        products[i]["id"] = product_id
+        products[i]["id"] = product_id"""
 
     """# create some variant for each product:
     for product in products:
@@ -133,18 +165,16 @@ def import_mode(etl_data_loader, product_csv):
 
 
 def request_mode(etl_data_requester):
-    # Add sample test with customers or products
-
     print(etl_data_requester.get_products())
 
 
 if __name__ == '__main__':
     # Variables initialization
     import_mode_activated = False
+    reachable = False
     index_for_csv_arg = 0
     path_to_csv = ""
     csv_file = ""
-
     # Check if the script will be run in import mode or not
     for index, arg in enumerate(sys.argv):
         if arg == "-i":
@@ -166,13 +196,16 @@ if __name__ == '__main__':
                 csv_file = open(path_to_csv)
                 if len(csv_file.read()) != 0:
                     edl = ETLDataLoader(auth_token)
-                    print("Script executed in import mode")
-                    import_mode(edl, path_to_csv)
+                    reachable = True
                 else:
                     print("The provided CSV file is empty")
                 csv_file.close()
+
             except Exception as e:
                 print("The file could not be opened: ", e)
+            if reachable:
+                print("Script executed in import mode")
+                import_mode(edl, path_to_csv)
         else:
             print("Please provide a valid path to a CSV file")
 
