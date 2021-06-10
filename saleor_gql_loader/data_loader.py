@@ -62,7 +62,7 @@ class ETLDataLoader:
         endpoint_url : str, optional
             the graphQL endpoint to be used , by default "http://localhost:8000/graphql/"
         """
-        self.headers = {"Authorization": "JWT {}".format(auth_token)}
+        self.headers = {"Authorization": "JWT {}".format(auth_token),  "charset": "cp1252"}
         self.endpoint_url = endpoint_url
 
     def update_shop_settings(self, **kwargs):
@@ -612,10 +612,8 @@ class ETLDataLoader:
                 }
             }
         """
-        print("VARIABLES: ", variables)
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
-        print("RESPONSE: ", response)
         errors = response["data"]["productCreate"]["productErrors"]
         handle_errors(errors)
 

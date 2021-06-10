@@ -7,3 +7,4 @@ MANIFEST
 venv/
 ./venv/
 .idea/
+*.csv

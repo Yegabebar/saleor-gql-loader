@@ -42,6 +42,7 @@ def graphql_request(query, variables={}, headers={},
         when `response.status_code` is not 200.
     """
     response = requests.post(
+
         endpoint,
         headers=headers,
         json={

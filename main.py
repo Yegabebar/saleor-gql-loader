@@ -60,34 +60,11 @@ def import_mode(etl_data_loader, product_csv):
     """shipping_zone_id = etl_data_loader.create_shipping_zone(addWarehouses=["79891a8c-7e28-48fd-8472-28edb13467a2"])
     print(shipping_zone_id)"""
 
-    # products = [
-    #     {
-    #         "name": "tea n",
-    #         "description": "description for tea a",
-    #         "category": "green tea",
-    #         "price": 5.5,
-    #         "strength": "medium"
-    #     },
-    #     {
-    #         "name": "tea o",
-    #         "description": "description for tea b",
-    #         "category": "black tea",
-    #         "price": 10.5,
-    #         "strength": "strong"
-    #     },
-    #     {
-    #         "name": "tea p",
-    #         "description": "description for tea c",
-    #         "category": "green tea",
-    #         "price": 9.5,
-    #         "strength": "light"
-    #     }
-    # ]
-
-    # TODO: Use our csv file to create new products
     products = []
     print("path to csv file: ", product_csv)
-    with open(product_csv, newline='') as file:
+    with open(product_csv, "r", encoding="ISO-8859-1", newline='') as file:
+
+        # print(chardet.detect(file.read().encode('utf-8')))
         csv_content = csv.DictReader(file, fieldnames=["name", "category", "price", "pros", "desc", "ingredients",
                                                        "how_to_use", "pictures"], delimiter=';', quotechar='|')
         for row in csv_content:
@@ -114,7 +91,7 @@ def import_mode(etl_data_loader, product_csv):
     # TODO: do a graphql request to check if the given category already exists or not in saleor.
     # create categories
     unique_categories = set([product['category'] for product in products])
-    print("UNIQUE CATEGORIES: ", unique_categories)
+
     category_id_dict = {}
     for category in unique_categories:
         category_id_dict[category] = etl_data_loader.create_category(name=category)
@@ -133,7 +110,7 @@ def import_mode(etl_data_loader, product_csv):
     # TODO: do a graphql request to check if the given product type already exists or not in saleor.
     # create the product types found in the CSV file
     unique_types = set([product['type'] for product in products])
-    print("UNIQUE TYPES: ", unique_types)
+
     product_type_ids = {}
     for new_type in unique_types:
         product_type_id = etl_data_loader.create_product_type(name=new_type,
@@ -151,26 +128,31 @@ def import_mode(etl_data_loader, product_csv):
 
     current_product_type_id = ""
     current_category_id = ""
-    # create products and store id
+    current_key = ""
+    # for each product:
     for i, product in enumerate(products):
-        print(len(product_type_ids))
+        # we get the newly created type ID and assign it to the current product if it matches the type name assigned to it
         if len(product_type_ids) > 1:
-            for type_id in product_type_ids:
-                current_product_type_id = [id_ for id_ in type_id if type_id == product['name']]
-                print(current_product_type_id)
+            for key in product_type_ids.keys():
+                current_key = [id_ for id_ in key if key == product['name']]
                 break
         else:
-            current_product_type_id = [id_ for id_ in product_type_ids][0]
+            # we don't want a for loop if the csv file only got 1 entry
+            current_key = [id_ for id_ in product_type_ids][0]
+        current_product_type_id = product_type_ids[str(current_key)]
 
-        print(len(category_id_dict))
+        # same actions for the category ID.
         if len(category_id_dict) > 1:
             for category in category_id_dict:
-                current_category_id = [id_ for id_ in category if category == product['category']]
-                print(current_category_id)
+                current_key = [id_ for id_ in category if category == product['category']]
                 break
         else:
-            current_category_id = [id_ for id_ in category_id_dict][0]
+            # we don't want a for loop if the csv file only got 1 entry
+            current_key = [id_ for id_ in category_id_dict][0]
+        current_category_id = category_id_dict[str(current_key)]
 
+        print("New product type ID: ", current_product_type_id)
+        # create products and store id
         product_id = etl_data_loader.create_product(current_product_type_id,
                                                     name=product["name"],
                                                     description=product["desc"],
@@ -179,7 +161,6 @@ def import_mode(etl_data_loader, product_csv):
                                                     category=current_category_id,
                                                     # attributes=[{"id": strength_attribute_id, "values": [product["strength"]]}],
                                                     isPublished=True
-
                                                     )
         products[i]["id"] = product_id
 
@@ -243,3 +224,4 @@ if __name__ == '__main__':
         # if no import argument found, the script will be executed in request mode
         edr = ETLDataRequester(auth_token)
         request_mode(edr)
+
