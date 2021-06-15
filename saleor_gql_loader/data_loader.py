@@ -503,7 +503,6 @@ class ETLDataLoader:
 
         response = graphql_request(
             query, variables, self.headers, self.endpoint_url)
-
         errors = response["data"]["productTypeCreate"]["productErrors"]
         handle_errors(errors)
 

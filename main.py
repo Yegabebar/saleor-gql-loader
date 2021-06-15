@@ -126,7 +126,7 @@ def import_mode(etl_data_loader, product_csv):
     unique_types = set([product['type'] for product in products])
 
     # GOAL: get a pair of types and sequence of attributes
-    mandatory_attributes = ["name", "type", "category", "price", "desc", "pictures"]
+    mandatory_attributes = ["name", "type", "category", "price", "desc", "pictures", "sku", "how_to_use"]
 
     created_types = []
     product_type_ids = {}
@@ -134,9 +134,9 @@ def import_mode(etl_data_loader, product_csv):
         if product['type'] not in created_types:
             attributes_to_create = []
             # We iterate on each product attributes
-            for attr, value in product.__dict__.items():
-                # HARDEN CONDITION: Check if BOTH the type and attribute names have already been processed
+            for attr in product.keys():
                 if attr not in mandatory_attributes:
+                    print("Will be created: ", attr)
                     """# We iterate on the list of one-sized dicts
                     for type_name_attr_name in created_attributes:
                         new_type_already_stored, new_attr_already_stored = True
@@ -149,11 +149,17 @@ def import_mode(etl_data_loader, product_csv):
 
                         if not new_type_already_stored and not new_attr_already_stored:
                             # if we don't find a key:value pair like the one we evaluate, add it to the creating queue"""
-                    attributes_to_create.append(attr)
+                    # create attribute
+                    id_attr = edl.create_attribute(variables={"inputType": "DROPDOWN", "name": attr})
+                    attributes_to_create.append(id_attr)
+
+            # ITERATE ON ATTRIBUTES TO CREATE and store the IDs in a list/dict
 
             product_type_id = etl_data_loader.create_product_type(name=product['type'],
                                                                   hasVariants=False,
                                                                   productAttributes=attributes_to_create,
+                                                                  variantAttributes=[],
+                                                                  isDigital="false"
                                                                   )
             created_types.append(product['type'])
 
