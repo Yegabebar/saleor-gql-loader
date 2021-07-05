@@ -52,7 +52,7 @@ class ETLDataLoader:
 
     """
 
-    def __init__(self, auth_token, endpoint_url="http://localhost:8000/graphql/"):
+    def __init__(self, auth_token, endpoint_url="http://192.168.1.61:8000/graphql/"):
         """initialize the `DataLoader` with an auth_token and an url endpoint.
 
         Parameters

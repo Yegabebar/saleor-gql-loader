@@ -82,6 +82,10 @@ def import_mode(etl_data_loader, product_csv):
                        }
             products.append(product)
 
+    # TODO: don't create the same type at each loop iteration
+    # use a dict to keep track of which type has already been created or not!
+    # USE A GRAPHQL REQUEST TO CHECK IF A TYPE ALREADY EXISTS OR NOT, TO TRIGGER AT THE START OF EACH LOOP ITERATION
+
     # add basic sku to products
     for i, product in enumerate(products):
         product["sku"] = "{:05}-00".format(i)
@@ -126,53 +130,43 @@ def import_mode(etl_data_loader, product_csv):
     unique_types = set([product['type'] for product in products])
 
     # GOAL: get a pair of types and sequence of attributes
-    mandatory_attributes = ["name", "type", "category", "price", "desc", "pictures", "sku", "how_to_use"]
+    mandatory_attributes = ["name", "type", "category", "price", "desc", "pictures", "sku"]
 
     created_types = []
     product_type_ids = {}
     for i, product in enumerate(products):
         if product['type'] not in created_types:
-            attributes_to_create = []
+            created_attributes_ids = []
             # We iterate on each product attributes
-            for attr in product.keys():
+            """for attr in product.keys():
                 if attr not in mandatory_attributes:
                     print("Will be created: ", attr)
-                    """# We iterate on the list of one-sized dicts
-                    for type_name_attr_name in created_attributes:
-                        new_type_already_stored, new_attr_already_stored = True
-                        stored_type_name = [type_ for type_ in type_name_attr_name.__dict__.keys()][0]
-                        if not stored_type_name == product['type']:
-                            new_type_already_stored = False
-                        stored_attribute_name = [attr for attr in type_name_attr_name.__dict__.items()][0]
-                        if not stored_attribute_name == attr:
-                            new_attr_already_stored = False
-
-                        if not new_type_already_stored and not new_attr_already_stored:
-                            # if we don't find a key:value pair like the one we evaluate, add it to the creating queue"""
                     # create attribute
                     id_attr = edl.create_attribute(variables={"inputType": "DROPDOWN", "name": attr})
-                    attributes_to_create.append(id_attr)
+                    created_attributes_ids.append(id_attr)"""
 
             # ITERATE ON ATTRIBUTES TO CREATE and store the IDs in a list/dict
-
+            # type creation
             product_type_id = etl_data_loader.create_product_type(name=product['type'],
                                                                   hasVariants=False,
-                                                                  productAttributes=attributes_to_create,
+                                                                  productAttributes=created_attributes_ids,
                                                                   variantAttributes=[],
                                                                   isDigital="false"
                                                                   )
             created_types.append(product['type'])
 
-        """for new_type in unique_types:
-            attrs_for_curr_type = [new_attr for type_name, new_attr in attributes_to_create.__dict__.items() if
-                                   type_name == new_type]
+        for new_type in unique_types:
+            # commented because attribute-related code
+            """attrs_for_curr_type = [new_attr for type_name, new_attr in product_type_ids.__dict__.items() if
+                                   type_name == new_type]"""
             product_type_id = etl_data_loader.create_product_type(name=new_type,
                                                                   hasVariants=False,
-                                                                  productAttributes=attrs_for_curr_type,
+                                                                  # productAttributes=attrs_for_curr_type,
                                                                   )
-            for type_name, new_attr in attributes_to_create.__dict__.items():
-                created_attributes.append({type_name: new_attr})
-            product_type_ids.update({new_type: product_type_id})"""
+            # related to attributes
+            """for type_name, new_attr in product_type_ids.__dict__.items():
+                created_attributes.append({type_name: new_attr})"""
+            product_type_ids.update({new_type: product_type_id})
 
         """# will be used if we want to support product variants
         # create another quantity attribute used as variant:
@@ -186,7 +180,7 @@ def import_mode(etl_data_loader, product_csv):
         current_key = ""
         # for each product:
 
-        # we get the newly created type ID and assign it to the current product if it matches the type name assigned to it
+        # get the newly created type ID and assign it to the current product if it matches the type name assigned to it
         if len(product_type_ids) > 1:
             for key in product_type_ids.keys():
                 current_key = [id_ for id_ in key if key == product['name']]

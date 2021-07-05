@@ -2,7 +2,7 @@ import json
 import requests
 
 
-def graphql_request(query, variables={}, headers={}, endpoint="http://localhost:8000/graphql/"):
+def graphql_request(query, variables={}, headers={}, endpoint="http://192.168.1.61:8000/graphql/"):
     json_content = {'query': query}
     if len(variables) != 0:
         json_content.update({'variables': variables})
@@ -24,7 +24,7 @@ def graphql_request(query, variables={}, headers={}, endpoint="http://localhost:
 
 class ETLDataRequester:
 
-    def __init__(self, auth_token, endpoint_url="http://localhost:8000/graphql/"):
+    def __init__(self, auth_token, endpoint_url="http://192.168.1.61:8000/graphql/"):
         """initialize the `DataRequester` with an auth_token and an url endpoint.
 
         Parameters

@@ -11,7 +11,7 @@ from pathlib import Path
 from requests_toolbelt import MultipartEncoder
 from django.core.serializers.json import DjangoJSONEncoder
 
-GQL_DEFAULT_ENDPOINT = "http://localhost:8000/graphql/"
+GQL_DEFAULT_ENDPOINT = "http://192.168.1.61:8000/graphql/"
 
 
 def graphql_request(query, variables={}, headers={},
